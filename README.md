@@ -1,36 +1,51 @@
 # Afghanistan Province District Village
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/barialay/afghanistan-province-district-village.svg)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
-[![Total Downloads](https://img.shields.io/packagist/dt/barialay/afghanistan-province-district-village.svg)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
-[![License](https://img.shields.io/packagist/l/barialay/afghanistan-province-district-village.svg)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/barialay/afghanistan-province-district-village.svg?style=flat-square)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
+[![Total Downloads](https://img.shields.io/packagist/dt/barialay/afghanistan-province-district-village.svg?style=flat-square)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![PHP Version](https://img.shields.io/packagist/php-v/barialay/afghanistan-province-district-village.svg?style=flat-square)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
 
-The **Afghanistan province district village** Laravel package — provinces, districts, and villages with GPS coordinates, multilingual names, and zero database setup.
+A Laravel package for Afghanistan **provinces**, **districts**, and **villages** — with GPS coordinates, multilingual names (English, Dari, Pashto), and zero database setup.
 
 Built by [Barialay](https://github.com/Barialay).
 
 ## Features
 
-- **Provinces & districts** with English, Dari, and Pashto names
+- **34 provinces** and **400+ districts** with English, Dari, and Pashto names
 - **8,800+ villages** linked to provinces and districts with GPS coordinates
-- Province → district → village lookup
+- Full **province → district → village** cascade for dropdowns and APIs
 - Laravel auto-discovery (Service Provider + Facade)
 - Publishable config and data files
-- Typed PHP objects: `Province`, `District`, `Village`
+- Data objects: `Province`, `District`, `Village`
 
 ## Requirements
 
-- PHP 7.3+ (PHP 7.4+ recommended)
-- Laravel 8, 9, 10, 11, or 12
+| PHP | Laravel |
+|-----|---------|
+| 7.3 – 7.4 | 8.x |
+| 8.0+ | 8.x, 9.x, 10.x, 11.x, 12.x |
 
-> **Note:** PHP 7.3/7.4 only works with **Laravel 8**. Laravel 9+ requires PHP 8.0+.
+- **PHP:** `^7.3` or `^8.0`
+- **Laravel:** `^8.0` through `^12.0`
+
+> PHP 7.3/7.4 only works with **Laravel 8**. Laravel 9 and above require PHP 8.0+.
 
 ## Installation
 
 ```bash
-composer require barialay/afghanistan-province-district-village
+composer require barialay/afghanistan-province-district-village:^1.4
 ```
 
 The package auto-registers. No manual setup needed.
+
+### If Composer blocks installation (security advisories)
+
+If you see errors about `security advisories` on `laravel/framework`, update your Laravel app first — this is not a package issue:
+
+```bash
+composer update
+composer require barialay/afghanistan-province-district-village:^1.4
+```
 
 ### Publish config (optional)
 
@@ -44,65 +59,86 @@ php artisan vendor:publish --tag=afghanistan-province-district-village-config
 php artisan vendor:publish --tag=afghanistan-province-district-village-data
 ```
 
-## Province → District → Village
-
-This package supports a cascading flow: pick a province (e.g. کابل / Kabul), then its districts, then villages for that district.
+## Quick Start
 
 ```php
 use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
 
-// 1. List all provinces
+// Provinces
 $provinces = Afghanistan::provinces();
-
-// 2. User selects Kabul — show its districts
 $kabul = Afghanistan::provinceByName('Kabul');
-// or by Dari: Afghanistan::provinceByName('کابل')
+// or: Afghanistan::provinceByName('کابل')
 
+// Districts in Kabul
 $districts = Afghanistan::districts($kabul->id);
-
-// 3. User selects a district — show its villages (works for all 34 provinces)
 $kabulDistrict = $districts->firstWhere('name', 'Kabul');
+
+// Villages in Kabul district
 $villages = Afghanistan::villagesByDistrict($kabulDistrict->id);
 
-// Same pattern for any province, e.g. Herat, Ghazni, Bamyan, Urozgan:
+// Find a village
+$village = Afghanistan::villageByName('Ab Bala');
+```
+
+### Verify installation (Tinker)
+
+```bash
+php artisan tinker
+```
+
+```php
+Afghanistan::countProvinces();  // 34
+Afghanistan::countVillages();   // 8892
+```
+
+## Province → District → Village
+
+Use **district ID** for the most reliable village lookup across all provinces:
+
+```php
+use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
+
+// 1. Provinces
+$provinces = Afghanistan::provinces();
+
+// 2. Districts for selected province
 $herat = Afghanistan::provinceByName('Herat');
-$heratDistrict = Afghanistan::districts($herat->id)->firstWhere('name', 'Herat');
+$districts = Afghanistan::districts($herat->id);
+
+// 3. Villages for selected district
+$heratDistrict = $districts->firstWhere('name', 'Herat');
 $villages = Afghanistan::villagesByDistrict($heratDistrict->id);
 ```
 
-### Blade example (3 dropdowns)
+### Blade dropdowns
 
 ```blade
-{{-- Province --}}
-<select name="province" id="province">
+<select name="province">
     @foreach (Afghanistan::provinces() as $province)
         <option value="{{ $province->id }}">{{ $province->nameFor('fa') }}</option>
     @endforeach
 </select>
-
-{{-- District (load via AJAX when province changes) --}}
-<select name="district" id="district"></select>
-
-{{-- Village (load via AJAX when district changes) --}}
-<select name="village" id="village"></select>
 ```
 
-### API example
+### API routes example
 
 ```php
-// GET /provinces
+use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
+use Illuminate\Http\Request;
+
+// GET /api/provinces
 public function provinces()
 {
     return Afghanistan::provinces()->map->toArray();
 }
 
-// GET /districts/{provinceId}
+// GET /api/districts/{provinceId}
 public function districts(int $provinceId)
 {
     return Afghanistan::districts($provinceId)->map->toArray();
 }
 
-// GET /villages?district_id=129
+// GET /api/villages?district_id=129
 public function villages(Request $request)
 {
     if ($request->filled('district_id')) {
@@ -113,29 +149,11 @@ public function villages(Request $request)
         return Afghanistan::villagesByProvince((int) $request->query('province_id'))->map->toArray();
     }
 
-    return Afghanistan::villages(
-        $request->query('province'),
-        $request->query('district')
-    )->map->toArray();
+    return Afghanistan::villages()->map->toArray();
 }
 ```
 
-## Quick Start
-
-```php
-use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
-
-$provinces = Afghanistan::provinces();
-$kabul = Afghanistan::provinceByName('Kabul');
-$districts = Afghanistan::districts($kabul->id);
-$villages = Afghanistan::villagesByDistrict($kabulDistrict->id);
-
-$village = Afghanistan::villageByName('Ab Bala');
-echo $village->name;
-echo $village->latitude;
-```
-
-## Usage
+## API Reference
 
 ### Facade
 
@@ -144,43 +162,49 @@ use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
 
 // Provinces
 Afghanistan::provinces();
-Afghanistan::provinceByName('Herat');
-Afghanistan::provinceByName('کابل'); // works with Dari names too
+Afghanistan::province(32);
+Afghanistan::provinceByName('Kabul');
+Afghanistan::provinceByName('کابل');
 
 // Districts
-Afghanistan::districts();              // all districts
-Afghanistan::districts($herat->id);    // districts in one province
+Afghanistan::districts();
+Afghanistan::districts($provinceId);
 
 // Villages
-Afghanistan::villages();                              // all villages
-Afghanistan::villagesByProvince($herat->id);          // by province ID (best for dropdowns)
-Afghanistan::villagesByDistrict($districtId);         // by district ID (best for dropdowns)
-Afghanistan::villages('Badakhshan', 'Wakhan');        // by province + district name
+Afghanistan::villages();
+Afghanistan::villagesByProvince($provinceId);
+Afghanistan::villagesByDistrict($districtId);
+Afghanistan::villages('Badakhshan', 'Wakhan');
 
-// Find single village
+// Find village
 Afghanistan::village(4183);
 Afghanistan::villageByName('Ab Bala');
 
 // Counts
 Afghanistan::countProvinces();
 Afghanistan::countDistricts();
-Afghanistan::countVillages('Kabul', 'Kabul');
+Afghanistan::countVillages();
 ```
 
-### Dependency Injection
+### Dependency injection
 
 ```php
 use Barialay\AfghanistanProvinceDistrictVillage\Afghanistan;
 
 class LocationController
 {
-    public function __construct(private Afghanistan $afghanistan) {}
+    protected $afghanistan;
+
+    public function __construct(Afghanistan $afghanistan)
+    {
+        $this->afghanistan = $afghanistan;
+    }
 
     public function index()
     {
-        return response()->json([
-            'provinces' => $this->afghanistan->provinces()->map->toArray(),
-        ]);
+        return response()->json(
+            $this->afghanistan->provinces()->map->toArray()
+        );
     }
 }
 ```
@@ -201,40 +225,29 @@ return [
 
 ### Village
 
-| Field                | Type   | Description                    |
-|----------------------|--------|--------------------------------|
-| `id`                 | int    | Unique village ID              |
-| `name`               | string | Village name                   |
-| `province`           | string | Province name                  |
-| `district`           | string | District name                  |
-| `province_id`        | int    | Linked province ID             |
-| `district_id`        | int    | Linked district ID             |
-| `latitude`           | float  | GPS latitude                   |
-| `longitude`          | float  | GPS longitude                  |
-| `area_square_meters` | float  | Area in m² (when available)    |
-| `hectares`           | float  | Area in hectares (when available) |
+| Field                | Type   | Description                 |
+|----------------------|--------|-----------------------------|
+| `id`                 | int    | Unique village ID           |
+| `name`               | string | Village name                |
+| `province`           | string | Province name               |
+| `district`           | string | District name               |
+| `province_id`        | int    | Linked province ID          |
+| `district_id`        | int    | Linked district ID          |
+| `latitude`           | float  | GPS latitude                |
+| `longitude`          | float  | GPS longitude               |
+| `area_square_meters` | float  | Area in m² (when available) |
+| `hectares`           | float  | Area in hectares            |
 
 ### Province / District
 
-| Field       | Type   | Description             |
-|-------------|--------|-------------------------|
-| `id`        | int    | Unique ID               |
-| `name`      | string | English name            |
-| `name_fa`   | string | Dari name               |
-| `name_pa`   | string | Pashto name             |
-| `latitude`  | float  | GPS latitude            |
-| `longitude` | float  | GPS longitude           |
-
-## Publish to Packagist
-
-1. Create a GitHub repository: `Barialay/afghanistan-province-district-village`
-2. Push this package (exclude `vendor/`)
-3. Register at [packagist.org](https://packagist.org) with your GitHub URL
-4. Users install with:
-
-```bash
-composer require barialay/afghanistan-province-district-village
-```
+| Field       | Type   | Description    |
+|-------------|--------|----------------|
+| `id`        | int    | Unique ID      |
+| `name`      | string | English name   |
+| `name_fa`   | string | Dari name      |
+| `name_pa`   | string | Pashto name    |
+| `latitude`  | float  | GPS latitude   |
+| `longitude` | float  | GPS longitude  |
 
 ## Testing
 
@@ -248,12 +261,12 @@ Geographic data is compiled from public sources. Some entries may be incomplete 
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**Users** install with Composer — no GitHub access needed.
-
-**Contributors** open a **Pull Request** on GitHub. You review and merge; they cannot push to your repo directly unless you add them as a collaborator.
+Contributions are welcome via Pull Request on [GitHub](https://github.com/Barialay/afghanistan-province-district-village).
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+This package is open-source software licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2026 [Barialay](https://github.com/Barialay).

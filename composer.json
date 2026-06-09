@@ -4,6 +4,7 @@
     "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates.",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://github.com/Barialay/afghanistan-province-district-village",
     "keywords": [
         "afghanistan",
         "afghanistan-province-district-village",
