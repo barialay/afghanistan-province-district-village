@@ -2,6 +2,13 @@
 
 All notable changes to `barialay/afghanistan-province-district-village` will be documented in this file.
 
+## [1.4.0] - 2026-06-09
+
+### Changed
+
+- PHP 7.3+ support (use with Laravel 8)
+- Removed PHP 8-only syntax for broader compatibility
+
 ## [1.3.0] - 2026-06-09
 
 ### Changed

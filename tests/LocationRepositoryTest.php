@@ -7,30 +7,35 @@ use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan as Afghanist
 
 class LocationRepositoryTest extends TestCase
 {
-    public function test_it_loads_provinces_from_admin_data(): void
+    public function test_it_loads_provinces_from_admin_data()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
         $this->assertGreaterThanOrEqual(34, $afghanistan->countProvinces());
     }
 
-    public function test_it_finds_a_province_by_english_or_dari_name(): void
+    public function test_it_finds_a_province_by_english_or_dari_name()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
-        $this->assertSame('Kabul', $afghanistan->provinceByName('Kabul')?->name);
-        $this->assertSame('Kabul', $afghanistan->provinceByName('کابل')?->name);
+        $kabul = $afghanistan->provinceByName('Kabul');
+        $kabulDari = $afghanistan->provinceByName('کابل');
+
+        $this->assertNotNull($kabul);
+        $this->assertNotNull($kabulDari);
+        $this->assertSame('Kabul', $kabul->name);
+        $this->assertSame('Kabul', $kabulDari->name);
     }
 
-    public function test_it_links_villages_across_all_provinces(): void
+    public function test_it_links_villages_across_all_provinces()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
         $this->assertSame(8892, $afghanistan->countVillages());
 
-        $linked = $afghanistan->villages()->filter(
-            fn ($village) => $village->provinceId !== null && $village->districtId !== null
-        );
+        $linked = $afghanistan->villages()->filter(function ($village) {
+            return $village->provinceId !== null && $village->districtId !== null;
+        });
 
         $this->assertGreaterThan(8400, $linked->count());
 
@@ -43,7 +48,7 @@ class LocationRepositoryTest extends TestCase
         }
     }
 
-    public function test_it_supports_province_district_village_cascade_for_multiple_provinces(): void
+    public function test_it_supports_province_district_village_cascade_for_multiple_provinces()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
@@ -55,7 +60,11 @@ class LocationRepositoryTest extends TestCase
             ['Urozgan', 'Tarin Kowt', 49],
         ];
 
-        foreach ($cases as [$provinceName, $districtName, $minimum]) {
+        foreach ($cases as $case) {
+            $provinceName = $case[0];
+            $districtName = $case[1];
+            $minimum = $case[2];
+
             $province = $afghanistan->provinceByName($provinceName);
             $this->assertNotNull($province, "Province {$provinceName} should exist");
 
@@ -70,7 +79,7 @@ class LocationRepositoryTest extends TestCase
         }
     }
 
-    public function test_it_finds_a_village_by_id_and_name(): void
+    public function test_it_finds_a_village_by_id_and_name()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
@@ -83,7 +92,7 @@ class LocationRepositoryTest extends TestCase
         $this->assertNotNull($afghanistan->villageByName('Ab Bala'));
     }
 
-    public function test_it_filters_districts_by_province(): void
+    public function test_it_filters_districts_by_province()
     {
         $afghanistan = $this->app->make(Afghanistan::class);
         $province = $afghanistan->provinceByName('Kabul');
@@ -91,10 +100,12 @@ class LocationRepositoryTest extends TestCase
         $districts = $afghanistan->districts($province->id);
 
         $this->assertGreaterThan(0, $districts->count());
-        $this->assertTrue($districts->every(fn ($district) => $district->provinceId === $province->id));
+        $this->assertTrue($districts->every(function ($district) use ($province) {
+            return $district->provinceId === $province->id;
+        }));
     }
 
-    public function test_facade_resolves_correctly(): void
+    public function test_facade_resolves_correctly()
     {
         $this->assertSame(8892, AfghanistanFacade::countVillages());
         $this->assertGreaterThanOrEqual(34, AfghanistanFacade::countProvinces());

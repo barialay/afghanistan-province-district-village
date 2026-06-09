@@ -7,37 +7,64 @@ use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Collection;
 use JsonSerializable;
 
-/**
- * @implements Arrayable<string, mixed>
- */
 class Province implements Arrayable, Jsonable, JsonSerializable
 {
+    /** @var int */
+    public $id;
+
+    /** @var string */
+    public $name;
+
+    /** @var string */
+    public $nameFa;
+
+    /** @var string */
+    public $namePa;
+
+    /** @var float|null */
+    public $latitude;
+
+    /** @var float|null */
+    public $longitude;
+
+    /** @var Collection */
+    public $districts;
+
     /**
-     * @param  Collection<int, District>  $districts
+     * @param  Collection  $districts
      */
     public function __construct(
-        public int $id,
-        public string $name,
-        public string $nameFa,
-        public string $namePa,
-        public ?float $latitude,
-        public ?float $longitude,
-        public Collection $districts,
-    ) {}
+        int $id,
+        string $name,
+        string $nameFa,
+        string $namePa,
+        $latitude,
+        $longitude,
+        Collection $districts
+    ) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->nameFa = $nameFa;
+        $this->namePa = $namePa;
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->districts = $districts;
+    }
 
     public function nameFor(string $locale = 'en'): string
     {
-        return match ($locale) {
-            'fa' => $this->nameFa,
-            'pa' => $this->namePa,
-            default => $this->name,
-        };
+        if ($locale === 'fa') {
+            return $this->nameFa;
+        }
+
+        if ($locale === 'pa') {
+            return $this->namePa;
+        }
+
+        return $this->name;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function toArray(): array
+    public function toArray()
     {
         return [
             'id' => $this->id,
@@ -50,15 +77,12 @@ class Province implements Arrayable, Jsonable, JsonSerializable
         ];
     }
 
-    public function toJson($options = 0): string
+    public function toJson($options = 0)
     {
         return json_encode($this->jsonSerialize(), $options | JSON_THROW_ON_ERROR);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function jsonSerialize(): array
+    public function jsonSerialize()
     {
         return $this->toArray();
     }

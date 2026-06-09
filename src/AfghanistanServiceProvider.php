@@ -8,31 +8,31 @@ use Illuminate\Support\ServiceProvider;
 
 class AfghanistanServiceProvider extends ServiceProvider
 {
-    public function register(): void
+    public function register()
     {
         $this->mergeConfigFrom(
             __DIR__.'/../config/afghanistan-province-district-village.php',
             'afghanistan-province-district-village'
         );
 
-        $this->app->singleton(LocationRepositoryInterface::class, function (): JsonLocationRepository {
+        $this->app->singleton(LocationRepositoryInterface::class, function () {
             return new JsonLocationRepository(
-                villagesFile: (string) config('afghanistan-province-district-village.villages_file'),
-                provincesFile: (string) config('afghanistan-province-district-village.provinces_file'),
+                (string) config('afghanistan-province-district-village.villages_file'),
+                (string) config('afghanistan-province-district-village.provinces_file')
             );
         });
 
-        $this->app->singleton(Afghanistan::class, function ($app): Afghanistan {
+        $this->app->singleton(Afghanistan::class, function ($app) {
             return new Afghanistan(
-                repository: $app->make(LocationRepositoryInterface::class),
-                defaultLocale: (string) config('afghanistan-province-district-village.default_locale', 'en'),
+                $app->make(LocationRepositoryInterface::class),
+                (string) config('afghanistan-province-district-village.default_locale', 'en')
             );
         });
 
         $this->app->alias(Afghanistan::class, 'afghanistan');
     }
 
-    public function boot(): void
+    public function boot()
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([

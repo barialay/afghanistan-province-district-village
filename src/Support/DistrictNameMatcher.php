@@ -7,8 +7,8 @@ use Barialay\AfghanistanProvinceDistrictVillage\Data\Province;
 
 class DistrictNameMatcher
 {
-    /** @var array<string, string>|null */
-    private static ?array $aliases = null;
+    /** @var array|null */
+    private static $aliases;
 
     public static function matchDistrictId(Province $province, string $villageProvinceName, string $villageDistrictName): ?int
     {
@@ -18,9 +18,9 @@ class DistrictNameMatcher
         if (isset($aliases[$aliasKey])) {
             $aliasTarget = self::normalized($aliases[$aliasKey]);
 
-            $district = $province->districts->first(
-                fn (District $district): bool => self::normalized($district->name) === $aliasTarget
-            );
+            $district = $province->districts->first(function (District $district) use ($aliasTarget) {
+                return self::normalized($district->name) === $aliasTarget;
+            });
 
             if ($district instanceof District) {
                 return $district->id;
@@ -69,7 +69,7 @@ class DistrictNameMatcher
     }
 
     /**
-     * @return array<string, string>
+     * @return array
      */
     private static function aliases(): array
     {
@@ -80,11 +80,12 @@ class DistrictNameMatcher
         return self::$aliases;
     }
 
-  /**
-     * @return list<string>
+    /**
+     * @return array
      */
-    private static function variants(string ...$names): array
+    private static function variants(): array
     {
+        $names = func_get_args();
         $variants = [];
 
         foreach ($names as $name) {
@@ -112,6 +113,9 @@ class DistrictNameMatcher
 
     private static function compact(string $value): string
     {
-        return preg_replace('/[^a-z0-9\x{0600}-\x{06FF}]/u', '', self::normalized($value)) ?? '';
+        $normalized = self::normalized($value);
+        $compact = preg_replace('/[^a-z0-9\x{0600}-\x{06FF}]/u', '', $normalized);
+
+        return $compact !== null ? $compact : '';
     }
 }

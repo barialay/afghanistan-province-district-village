@@ -10,79 +10,94 @@ use Illuminate\Support\Collection;
 
 class Afghanistan
 {
-    private LocationRepositoryInterface $repository;
+    /** @var LocationRepositoryInterface */
+    private $repository;
 
-    private string $defaultLocale;
+    /** @var string */
+    private $defaultLocale;
 
-    public function __construct(
-        LocationRepositoryInterface $repository,
-        string $defaultLocale = 'en'
-    ) {
+    public function __construct(LocationRepositoryInterface $repository, string $defaultLocale = 'en')
+    {
         $this->repository = $repository;
         $this->defaultLocale = $defaultLocale;
     }
 
     /**
-     * @return Collection<int, Province>
+     * @return Collection
      */
-    public function provinces(): Collection
+    public function provinces()
     {
         return $this->repository->provinces();
     }
 
-    public function province(int $id): ?Province
+    /**
+     * @return Province|null
+     */
+    public function province(int $id)
     {
         return $this->repository->findProvince($id);
     }
 
-    public function provinceByName(string $name): ?Province
+    /**
+     * @return Province|null
+     */
+    public function provinceByName(string $name)
     {
         return $this->repository->findProvinceByName($name);
     }
 
     /**
-     * @return Collection<int, District>
+     * @return Collection
      */
-    public function districts(?int $provinceId = null): Collection
+    public function districts(?int $provinceId = null)
     {
         return $this->repository->districts($provinceId);
     }
 
-    public function district(int $id): ?District
+    /**
+     * @return District|null
+     */
+    public function district(int $id)
     {
         return $this->repository->findDistrict($id);
     }
 
     /**
-     * @return Collection<int, Village>
+     * @return Collection
      */
-    public function villages(?string $province = null, ?string $district = null): Collection
+    public function villages(?string $province = null, ?string $district = null)
     {
         return $this->repository->villages($province, $district);
     }
 
     /**
-     * @return Collection<int, Village>
+     * @return Collection
      */
-    public function villagesByProvince(int $provinceId): Collection
+    public function villagesByProvince(int $provinceId)
     {
         return $this->repository->villagesByProvince($provinceId);
     }
 
     /**
-     * @return Collection<int, Village>
+     * @return Collection
      */
-    public function villagesByDistrict(int $districtId): Collection
+    public function villagesByDistrict(int $districtId)
     {
         return $this->repository->villagesByDistrict($districtId);
     }
 
-    public function village(int $id): ?Village
+    /**
+     * @return Village|null
+     */
+    public function village(int $id)
     {
         return $this->repository->findVillage($id);
     }
 
-    public function villageByName(string $name): ?Village
+    /**
+     * @return Village|null
+     */
+    public function villageByName(string $name)
     {
         return $this->repository->findVillageByName($name);
     }

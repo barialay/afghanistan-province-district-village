@@ -19,8 +19,10 @@ Built by [Barialay](https://github.com/Barialay).
 
 ## Requirements
 
-- PHP 8.0+
+- PHP 7.3+ (PHP 7.4+ recommended)
 - Laravel 8, 9, 10, 11, or 12
+
+> **Note:** PHP 7.3/7.4 only works with **Laravel 8**. Laravel 9+ requires PHP 8.0+.
 
 ## Installation
 

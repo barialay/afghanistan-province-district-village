@@ -1,6 +1,6 @@
 {
     "name": "barialay/afghanistan-province-district-village",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates.",
     "type": "library",
     "license": "MIT",
@@ -27,7 +27,7 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^7.3|^8.0",
         "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0",
         "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0|^12.0"
     },

@@ -13,15 +13,17 @@ use RuntimeException;
 
 class JsonLocationRepository implements LocationRepositoryInterface
 {
-    /** @var Collection<int, Province>|null */
-    private ?Collection $provinces = null;
+    /** @var Collection|null */
+    private $provinces;
 
-    /** @var Collection<int, Village>|null */
-    private ?Collection $villages = null;
+    /** @var Collection|null */
+    private $villages;
 
-    private string $villagesFile;
+    /** @var string */
+    private $villagesFile;
 
-    private string $provincesFile;
+    /** @var string */
+    private $provincesFile;
 
     public function __construct(string $villagesFile, string $provincesFile)
     {
@@ -32,7 +34,9 @@ class JsonLocationRepository implements LocationRepositoryInterface
     public function provinces(): Collection
     {
         return $this->loadProvinces()
-            ->filter(fn (Province $province): bool => $province->name !== 'N/A')
+            ->filter(function (Province $province) {
+                return $province->name !== 'N/A';
+            })
             ->values();
     }
 
@@ -45,24 +49,27 @@ class JsonLocationRepository implements LocationRepositoryInterface
     {
         $normalized = ProvinceNameMapper::normalize($name);
 
-        return $this->provinces()->first(
-            fn (Province $province): bool => ProvinceNameMapper::normalize($province->name) === $normalized
+        return $this->provinces()->first(function (Province $province) use ($normalized) {
+            return ProvinceNameMapper::normalize($province->name) === $normalized
                 || ProvinceNameMapper::normalize($province->nameFa) === $normalized
-                || ProvinceNameMapper::normalize($province->namePa) === $normalized
-        );
+                || ProvinceNameMapper::normalize($province->namePa) === $normalized;
+        });
     }
 
     public function districts(?int $provinceId = null): Collection
     {
-        $districts = $this->loadProvinces()
-            ->flatMap(fn (Province $province): Collection => $province->districts);
+        $districts = $this->loadProvinces()->flatMap(function (Province $province) {
+            return $province->districts;
+        });
 
         if ($provinceId === null) {
             return $districts->values();
         }
 
         return $districts
-            ->filter(fn (District $district): bool => $district->provinceId === $provinceId)
+            ->filter(function (District $district) use ($provinceId) {
+                return $district->provinceId === $provinceId;
+            })
             ->values();
     }
 
@@ -79,35 +86,35 @@ class JsonLocationRepository implements LocationRepositoryInterface
             $provinceRecord = $this->findProvinceByName($province);
 
             if ($provinceRecord !== null) {
-                $villages = $villages->filter(
-                    fn (Village $village): bool => $village->provinceId === $provinceRecord->id
-                );
+                $villages = $villages->filter(function (Village $village) use ($provinceRecord) {
+                    return $village->provinceId === $provinceRecord->id;
+                });
             } else {
                 $normalizedProvince = ProvinceNameMapper::normalize($province);
 
-                $villages = $villages->filter(
-                    fn (Village $village): bool => ProvinceNameMapper::normalize($village->province) === $normalizedProvince
-                );
+                $villages = $villages->filter(function (Village $village) use ($normalizedProvince) {
+                    return ProvinceNameMapper::normalize($village->province) === $normalizedProvince;
+                });
             }
         }
 
         if ($district !== null) {
-            $districtRecord = $this->districts()->first(
-                fn (District $item): bool => ProvinceNameMapper::normalize($item->name) === ProvinceNameMapper::normalize($district)
+            $districtRecord = $this->districts()->first(function (District $item) use ($district) {
+                return ProvinceNameMapper::normalize($item->name) === ProvinceNameMapper::normalize($district)
                     || ProvinceNameMapper::normalize($item->nameFa) === ProvinceNameMapper::normalize($district)
-                    || ProvinceNameMapper::normalize($item->namePa) === ProvinceNameMapper::normalize($district)
-            );
+                    || ProvinceNameMapper::normalize($item->namePa) === ProvinceNameMapper::normalize($district);
+            });
 
             if ($districtRecord !== null) {
-                $villages = $villages->filter(
-                    fn (Village $village): bool => $village->districtId === $districtRecord->id
-                );
+                $villages = $villages->filter(function (Village $village) use ($districtRecord) {
+                    return $village->districtId === $districtRecord->id;
+                });
             } else {
                 $normalizedDistrict = ProvinceNameMapper::normalize($district);
 
-                $villages = $villages->filter(
-                    fn (Village $village): bool => ProvinceNameMapper::normalize($village->district) === $normalizedDistrict
-                );
+                $villages = $villages->filter(function (Village $village) use ($normalizedDistrict) {
+                    return ProvinceNameMapper::normalize($village->district) === $normalizedDistrict;
+                });
             }
         }
 
@@ -117,14 +124,18 @@ class JsonLocationRepository implements LocationRepositoryInterface
     public function villagesByProvince(int $provinceId): Collection
     {
         return $this->loadVillages()
-            ->filter(fn (Village $village): bool => $village->provinceId === $provinceId)
+            ->filter(function (Village $village) use ($provinceId) {
+                return $village->provinceId === $provinceId;
+            })
             ->values();
     }
 
     public function villagesByDistrict(int $districtId): Collection
     {
         return $this->loadVillages()
-            ->filter(fn (Village $village): bool => $village->districtId === $districtId)
+            ->filter(function (Village $village) use ($districtId) {
+                return $village->districtId === $districtId;
+            })
             ->values();
     }
 
@@ -137,13 +148,13 @@ class JsonLocationRepository implements LocationRepositoryInterface
     {
         $normalized = ProvinceNameMapper::normalize($name);
 
-        return $this->loadVillages()->first(
-            fn (Village $village): bool => ProvinceNameMapper::normalize($village->name) === $normalized
-        );
+        return $this->loadVillages()->first(function (Village $village) use ($normalized) {
+            return ProvinceNameMapper::normalize($village->name) === $normalized;
+        });
     }
 
     /**
-     * @return Collection<int, Province>
+     * @return Collection
      */
     private function loadProvinces(): Collection
     {
@@ -152,29 +163,30 @@ class JsonLocationRepository implements LocationRepositoryInterface
         }
 
         $data = $this->readJson($this->provincesFile);
+        $repository = $this;
 
-        $this->provinces = collect($data)->map(function (array $item): Province {
-            $districts = collect($item['districts'] ?? [])->map(
-                fn (array $district): District => new District(
-                    id: (int) $district['id'],
-                    name: trim((string) $district['name']),
-                    nameFa: trim((string) ($district['nameFa'] ?? $district['name'])),
-                    namePa: trim((string) ($district['namePa'] ?? $district['name'])),
-                    latitude: $this->toFloat($district['latitude'] ?? null),
-                    longitude: $this->toFloat($district['longitude'] ?? null),
-                    provinceId: (int) $item['id'],
-                    provinceName: (string) $item['name'],
-                )
-            );
+        $this->provinces = collect($data)->map(function (array $item) use ($repository) {
+            $districts = collect($item['districts'] ?? [])->map(function (array $district) use ($item, $repository) {
+                return new District(
+                    (int) $district['id'],
+                    trim((string) $district['name']),
+                    trim((string) ($district['nameFa'] ?? $district['name'])),
+                    trim((string) ($district['namePa'] ?? $district['name'])),
+                    $repository->toFloat($district['latitude'] ?? null),
+                    $repository->toFloat($district['longitude'] ?? null),
+                    (int) $item['id'],
+                    (string) $item['name']
+                );
+            });
 
             return new Province(
-                id: (int) $item['id'],
-                name: trim((string) $item['name']),
-                nameFa: trim((string) ($item['nameFa'] ?? $item['name'])),
-                namePa: trim((string) ($item['namePa'] ?? $item['name'])),
-                latitude: $this->toFloat($item['latitude'] ?? null),
-                longitude: $this->toFloat($item['longitude'] ?? null),
-                districts: $districts,
+                (int) $item['id'],
+                trim((string) $item['name']),
+                trim((string) ($item['nameFa'] ?? $item['name'])),
+                trim((string) ($item['namePa'] ?? $item['name'])),
+                $repository->toFloat($item['latitude'] ?? null),
+                $repository->toFloat($item['longitude'] ?? null),
+                $districts
             );
         })->values();
 
@@ -182,7 +194,7 @@ class JsonLocationRepository implements LocationRepositoryInterface
     }
 
     /**
-     * @return Collection<int, Village>
+     * @return Collection
      */
     private function loadVillages(): Collection
     {
@@ -192,32 +204,35 @@ class JsonLocationRepository implements LocationRepositoryInterface
 
         $data = $this->readJson($this->villagesFile);
         $provinces = $this->loadProvinces();
+        $repository = $this;
 
-        $this->villages = collect($data)->map(function (array $item) use ($provinces): Village {
+        $this->villages = collect($data)->map(function (array $item) use ($provinces, $repository) {
             $villageProvince = (string) ($item['Province'] ?? $item['province'] ?? '');
             $villageDistrict = (string) ($item['District'] ?? $item['district'] ?? '');
 
-            $province = $provinces->first(
-                fn (Province $record): bool => ProvinceNameMapper::villageMatchesAdmin($villageProvince, $record->name)
-            );
+            $province = $provinces->first(function (Province $record) use ($villageProvince) {
+                return ProvinceNameMapper::villageMatchesAdmin($villageProvince, $record->name);
+            });
 
             $districtId = null;
+            $provinceId = null;
 
             if ($province !== null) {
+                $provinceId = $province->id;
                 $districtId = DistrictNameMatcher::matchDistrictId($province, $villageProvince, $villageDistrict);
             }
 
             return new Village(
-                id: (int) ($item['No'] ?? $item['number'] ?? $item['id'] ?? 0),
-                name: (string) ($item['Village Name'] ?? $item['name'] ?? ''),
-                province: $villageProvince,
-                district: $villageDistrict,
-                provinceId: $province?->id,
-                districtId: $districtId,
-                latitude: $this->toFloat($item['Latitude'] ?? $item['latitude'] ?? null),
-                longitude: $this->toFloat($item['Longitude'] ?? $item['longitude'] ?? null),
-                areaSquareMeters: $this->toFloat($item['Area(Square Meter)'] ?? $item['area_square_meters'] ?? null),
-                hectares: $this->toFloat($item['Hectares'] ?? $item['hectares'] ?? null),
+                (int) ($item['No'] ?? $item['number'] ?? $item['id'] ?? 0),
+                (string) ($item['Village Name'] ?? $item['name'] ?? ''),
+                $villageProvince,
+                $villageDistrict,
+                $provinceId,
+                $districtId,
+                $repository->toFloat($item['Latitude'] ?? $item['latitude'] ?? null),
+                $repository->toFloat($item['Longitude'] ?? $item['longitude'] ?? null),
+                $repository->toFloat($item['Area(Square Meter)'] ?? $item['area_square_meters'] ?? null),
+                $repository->toFloat($item['Hectares'] ?? $item['hectares'] ?? null)
             );
         })->values();
 
@@ -225,7 +240,7 @@ class JsonLocationRepository implements LocationRepositoryInterface
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array
      */
     private function readJson(string $path): array
     {
@@ -239,7 +254,7 @@ class JsonLocationRepository implements LocationRepositoryInterface
             throw new RuntimeException("Unable to read Afghanistan data file: {$path}");
         }
 
-        $data = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
+        $data = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
 
         if (! is_array($data)) {
             throw new RuntimeException("Invalid JSON structure in data file: {$path}");
@@ -248,7 +263,11 @@ class JsonLocationRepository implements LocationRepositoryInterface
         return $data;
     }
 
-    private function toFloat(mixed $value): ?float
+    /**
+     * @param  mixed  $value
+     * @return float|null
+     */
+    private function toFloat($value): ?float
     {
         if ($value === null || $value === '') {
             return null;
