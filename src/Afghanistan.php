@@ -54,9 +54,25 @@ class Afghanistan
         return $this->repository->villages($province, $district);
     }
 
-    public function village(string $osmId): ?Village
+    /**
+     * @return Collection<int, Village>
+     */
+    public function villagesByProvince(int $provinceId): Collection
     {
-        return $this->repository->findVillage($osmId);
+        return $this->repository->villagesByProvince($provinceId);
+    }
+
+    /**
+     * @return Collection<int, Village>
+     */
+    public function villagesByDistrict(int $districtId): Collection
+    {
+        return $this->repository->villagesByDistrict($districtId);
+    }
+
+    public function village(int $id): ?Village
+    {
+        return $this->repository->findVillage($id);
     }
 
     public function villageByName(string $name): ?Village

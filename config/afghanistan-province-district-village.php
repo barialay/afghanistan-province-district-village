@@ -4,22 +4,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | GeoJSON Data File
+    | Villages Data File
     |--------------------------------------------------------------------------
-    |
-    | Path to the OpenStreetMap GeoJSON export containing village features.
-    |
     */
 
-    'geojson_file' => __DIR__.'/../resources/data/export.geojson',
+    'villages_file' => __DIR__.'/../resources/data/villages.json',
 
     /*
     |--------------------------------------------------------------------------
     | Provinces & Districts Data File
     |--------------------------------------------------------------------------
-    |
-    | Path to the JSON file containing province and district admin boundaries.
-    |
     */
 
     'provinces_file' => __DIR__.'/../resources/data/provinces-and-districts.json',

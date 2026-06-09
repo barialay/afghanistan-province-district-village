@@ -14,52 +14,79 @@ class LocationRepositoryTest extends TestCase
         $this->assertGreaterThanOrEqual(34, $afghanistan->countProvinces());
     }
 
-    public function test_it_finds_a_province_by_name(): void
+    public function test_it_finds_a_province_by_english_or_dari_name(): void
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
-        $province = $afghanistan->provinceByName('Kabul');
-
-        $this->assertNotNull($province);
-        $this->assertSame('Kabul', $province->name);
+        $this->assertSame('Kabul', $afghanistan->provinceByName('Kabul')?->name);
+        $this->assertSame('Kabul', $afghanistan->provinceByName('کابل')?->name);
     }
 
-    public function test_it_loads_villages_from_geojson(): void
+    public function test_it_links_villages_across_all_provinces(): void
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
-        $this->assertSame(2932, $afghanistan->countVillages());
+        $this->assertSame(8892, $afghanistan->countVillages());
+
+        $linked = $afghanistan->villages()->filter(
+            fn ($village) => $village->provinceId !== null && $village->districtId !== null
+        );
+
+        $this->assertGreaterThan(8400, $linked->count());
+
+        foreach ($afghanistan->provinces() as $province) {
+            $this->assertGreaterThan(
+                0,
+                $afghanistan->villagesByProvince($province->id)->count(),
+                "Expected villages for {$province->name}"
+            );
+        }
     }
 
-    public function test_it_finds_a_village_by_osm_id(): void
+    public function test_it_supports_province_district_village_cascade_for_multiple_provinces(): void
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
-        $village = $afghanistan->village('node/8378744476');
+        $cases = [
+            ['Kabul', 'Kabul', 33],
+            ['Herat', 'Herat', 25],
+            ['Ghazni', 'Andar', 25],
+            ['Bamyan', 'Center of Bamyan', 25],
+            ['Urozgan', 'Tarin Kowt', 49],
+        ];
+
+        foreach ($cases as [$provinceName, $districtName, $minimum]) {
+            $province = $afghanistan->provinceByName($provinceName);
+            $this->assertNotNull($province, "Province {$provinceName} should exist");
+
+            $district = $afghanistan->districts($province->id)->firstWhere('name', $districtName);
+            $this->assertNotNull($district, "District {$districtName} should exist in {$provinceName}");
+
+            $this->assertGreaterThanOrEqual(
+                $minimum,
+                $afghanistan->villagesByDistrict($district->id)->count(),
+                "Villages missing for {$provinceName} / {$districtName}"
+            );
+        }
+    }
+
+    public function test_it_finds_a_village_by_id_and_name(): void
+    {
+        $afghanistan = $this->app->make(Afghanistan::class);
+
+        $village = $afghanistan->village(4183);
 
         $this->assertNotNull($village);
-        $this->assertSame('کشت', $village->name);
-        $this->assertSame('Kesht', $village->nameEn);
-        $this->assertNotNull($village->latitude);
-        $this->assertNotNull($village->longitude);
-    }
+        $this->assertSame('Ab Bala', $village->name);
+        $this->assertSame('Bamyan', $village->province);
 
-    public function test_it_finds_a_village_by_name(): void
-    {
-        $afghanistan = $this->app->make(Afghanistan::class);
-
-        $village = $afghanistan->villageByName('Kesht');
-
-        $this->assertNotNull($village);
-        $this->assertSame('node/8378744476', $village->osmId);
+        $this->assertNotNull($afghanistan->villageByName('Ab Bala'));
     }
 
     public function test_it_filters_districts_by_province(): void
     {
         $afghanistan = $this->app->make(Afghanistan::class);
         $province = $afghanistan->provinceByName('Kabul');
-
-        $this->assertNotNull($province);
 
         $districts = $afghanistan->districts($province->id);
 
@@ -69,17 +96,7 @@ class LocationRepositoryTest extends TestCase
 
     public function test_facade_resolves_correctly(): void
     {
-        $this->assertSame(2932, AfghanistanFacade::countVillages());
+        $this->assertSame(8892, AfghanistanFacade::countVillages());
         $this->assertGreaterThanOrEqual(34, AfghanistanFacade::countProvinces());
-    }
-
-    public function test_village_supports_localized_names(): void
-    {
-        $afghanistan = $this->app->make(Afghanistan::class);
-        $village = $afghanistan->villageByName('Do Ab');
-
-        $this->assertNotNull($village);
-        $this->assertSame('Do Ab', $village->nameFor('en'));
-        $this->assertSame('دوآب', $village->name);
     }
 }

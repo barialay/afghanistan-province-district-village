@@ -12,27 +12,17 @@ use JsonSerializable;
 readonly class Village implements Arrayable, Jsonable, JsonSerializable
 {
     public function __construct(
-        public string $osmId,
+        public int $id,
         public string $name,
-        public ?string $nameEn = null,
-        public ?string $nameFa = null,
-        public ?string $namePs = null,
-        public ?string $province = null,
-        public ?string $district = null,
+        public string $province,
+        public string $district,
+        public ?int $provinceId = null,
+        public ?int $districtId = null,
         public ?float $latitude = null,
         public ?float $longitude = null,
-        public ?string $population = null,
+        public ?float $areaSquareMeters = null,
+        public ?float $hectares = null,
     ) {}
-
-    public function nameFor(string $locale = 'en'): string
-    {
-        return match ($locale) {
-            'fa' => $this->nameFa ?? $this->name,
-            'pa' => $this->namePs ?? $this->name,
-            'en' => $this->nameEn ?? $this->name,
-            default => $this->name,
-        };
-    }
 
     /**
      * @return array<string, mixed>
@@ -40,16 +30,16 @@ readonly class Village implements Arrayable, Jsonable, JsonSerializable
     public function toArray(): array
     {
         return [
-            'osm_id' => $this->osmId,
+            'id' => $this->id,
             'name' => $this->name,
-            'name_en' => $this->nameEn,
-            'name_fa' => $this->nameFa,
-            'name_ps' => $this->namePs,
             'province' => $this->province,
             'district' => $this->district,
+            'province_id' => $this->provinceId,
+            'district_id' => $this->districtId,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
-            'population' => $this->population,
+            'area_square_meters' => $this->areaSquareMeters,
+            'hectares' => $this->hectares,
         ];
     }
 

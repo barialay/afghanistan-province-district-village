@@ -1,6 +1,6 @@
 {
     "name": "barialay/afghanistan-province-district-village",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates from OpenStreetMap GeoJSON.",
     "type": "library",
     "license": "MIT",

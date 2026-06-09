@@ -3,7 +3,7 @@
 namespace Barialay\AfghanistanProvinceDistrictVillage;
 
 use Barialay\AfghanistanProvinceDistrictVillage\Contracts\LocationRepositoryInterface;
-use Barialay\AfghanistanProvinceDistrictVillage\Repositories\GeoJsonLocationRepository;
+use Barialay\AfghanistanProvinceDistrictVillage\Repositories\JsonLocationRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AfghanistanServiceProvider extends ServiceProvider
@@ -15,9 +15,9 @@ class AfghanistanServiceProvider extends ServiceProvider
             'afghanistan-province-district-village'
         );
 
-        $this->app->singleton(LocationRepositoryInterface::class, function (): GeoJsonLocationRepository {
-            return new GeoJsonLocationRepository(
-                geojsonFile: (string) config('afghanistan-province-district-village.geojson_file'),
+        $this->app->singleton(LocationRepositoryInterface::class, function (): JsonLocationRepository {
+            return new JsonLocationRepository(
+                villagesFile: (string) config('afghanistan-province-district-village.villages_file'),
                 provincesFile: (string) config('afghanistan-province-district-village.provinces_file'),
             );
         });

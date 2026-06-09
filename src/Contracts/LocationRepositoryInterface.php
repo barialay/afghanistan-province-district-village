@@ -30,7 +30,17 @@ interface LocationRepositoryInterface
      */
     public function villages(?string $province = null, ?string $district = null): Collection;
 
-    public function findVillage(string $osmId): ?Village;
+    /**
+     * @return Collection<int, Village>
+     */
+    public function villagesByProvince(int $provinceId): Collection;
+
+    /**
+     * @return Collection<int, Village>
+     */
+    public function villagesByDistrict(int $districtId): Collection;
+
+    public function findVillage(int $id): ?Village;
 
     public function findVillageByName(string $name): ?Village;
 }
