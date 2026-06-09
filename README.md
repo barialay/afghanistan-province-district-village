@@ -246,7 +246,11 @@ Geographic data is compiled from public sources. Some entries may be incomplete 
 
 ## Contributing
 
-Issues and pull requests are welcome at [github.com/Barialay/afghanistan-province-district-village](https://github.com/Barialay/afghanistan-province-district-village).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+
+**Users** install with Composer — no GitHub access needed.
+
+**Contributors** open a **Pull Request** on GitHub. You review and merge; they cannot push to your repo directly unless you add them as a collaborator.
 
 ## License
 
