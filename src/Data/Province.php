@@ -10,7 +10,7 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, mixed>
  */
-readonly class Province implements Arrayable, Jsonable, JsonSerializable
+class Province implements Arrayable, Jsonable, JsonSerializable
 {
     /**
      * @param  Collection<int, District>  $districts

@@ -19,8 +19,8 @@ Built by [Barialay](https://github.com/Barialay).
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 11 or 12
+- PHP 8.0+
+- Laravel 8, 9, 10, 11, or 12
 
 ## Installation
 

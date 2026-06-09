@@ -19,10 +19,15 @@ class JsonLocationRepository implements LocationRepositoryInterface
     /** @var Collection<int, Village>|null */
     private ?Collection $villages = null;
 
-    public function __construct(
-        private readonly string $villagesFile,
-        private readonly string $provincesFile,
-    ) {}
+    private string $villagesFile;
+
+    private string $provincesFile;
+
+    public function __construct(string $villagesFile, string $provincesFile)
+    {
+        $this->villagesFile = $villagesFile;
+        $this->provincesFile = $provincesFile;
+    }
 
     public function provinces(): Collection
     {

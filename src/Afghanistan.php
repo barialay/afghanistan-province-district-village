@@ -10,10 +10,17 @@ use Illuminate\Support\Collection;
 
 class Afghanistan
 {
+    private LocationRepositoryInterface $repository;
+
+    private string $defaultLocale;
+
     public function __construct(
-        private readonly LocationRepositoryInterface $repository,
-        private readonly string $defaultLocale = 'en',
-    ) {}
+        LocationRepositoryInterface $repository,
+        string $defaultLocale = 'en'
+    ) {
+        $this->repository = $repository;
+        $this->defaultLocale = $defaultLocale;
+    }
 
     /**
      * @return Collection<int, Province>

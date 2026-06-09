@@ -9,7 +9,7 @@ use JsonSerializable;
 /**
  * @implements Arrayable<string, mixed>
  */
-readonly class District implements Arrayable, Jsonable, JsonSerializable
+class District implements Arrayable, Jsonable, JsonSerializable
 {
     public function __construct(
         public int $id,

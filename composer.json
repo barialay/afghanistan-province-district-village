@@ -1,7 +1,7 @@
 {
     "name": "barialay/afghanistan-province-district-village",
-    "version": "1.2.0",
-    "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates from OpenStreetMap GeoJSON.",
+    "version": "1.3.0",
+    "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates.",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -15,8 +15,6 @@
         "village",
         "laravel",
         "laravel-package",
-        "geojson",
-        "openstreetmap",
         "gps",
         "coordinates",
         "dari",
@@ -29,14 +27,14 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^11.0|^12.0",
-        "illuminate/contracts": "^11.0|^12.0"
+        "php": "^8.0",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0",
+        "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "laravel/pint": "^1.24",
-        "orchestra/testbench": "^10.0",
-        "phpunit/phpunit": "^11.5"
+        "laravel/pint": "^1.13",
+        "orchestra/testbench": "^6.47|^7.0|^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^9.6|^10.5|^11.5"
     },
     "autoload": {
         "psr-4": {
