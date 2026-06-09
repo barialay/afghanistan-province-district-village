@@ -5,18 +5,30 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/packagist/php-v/barialay/afghanistan-province-district-village.svg?style=flat-square)](https://packagist.org/packages/barialay/afghanistan-province-district-village)
 
-A Laravel package for Afghanistan **provinces**, **districts**, and **villages** — with GPS coordinates, multilingual names (English, Dari, Pashto), and zero database setup.
+A Laravel package for Afghanistan **provinces**, **districts**, and **villages**.
+
+This package includes a full **village database** — **8,892 villages** across all **34 provinces**, each with a name, GPS coordinates, and links to its province and district. No database migrations or seeding required; villages ship as JSON and load at runtime.
 
 Built by [Barialay](https://github.com/Barialay).
 
+## What's included
+
+| Data        | Count   | Details                                              |
+|-------------|---------|------------------------------------------------------|
+| Provinces   | 34      | English, Dari, and Pashto names + GPS coordinates    |
+| Districts   | 400+    | Linked to provinces, multilingual names              |
+| **Villages**| **8,892** | **Name, GPS, province ID, district ID** — all provinces |
+
 ## Features
 
-- **34 provinces** and **400+ districts** with English, Dari, and Pashto names
-- **8,800+ villages** linked to provinces and districts with GPS coordinates
-- Full **province → district → village** cascade for dropdowns and APIs
-- Laravel auto-discovery (Service Provider + Facade)
-- Publishable config and data files
-- Data objects: `Province`, `District`, `Village`
+- **List all 8,892 villages** or filter by province / district
+- **Province → district → village** cascade — ideal for 3-level dropdowns
+- Villages include **latitude**, **longitude**, and area data when available
+- Find a village by **ID** or **name**
+- Multilingual province and district names (English, Dari, Pashto)
+- Laravel auto-discovery (Service Provider + `Afghanistan` Facade)
+- Publishable config and JSON data files
+- Typed objects: `Province`, `District`, `Village`
 
 ## Requirements
 
@@ -59,65 +71,126 @@ php artisan vendor:publish --tag=afghanistan-province-district-village-config
 php artisan vendor:publish --tag=afghanistan-province-district-village-data
 ```
 
-## Quick Start
+## Villages
+
+The package **lists villages**. Use any of the methods below depending on your UI or API.
+
+### List all villages
 
 ```php
 use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
 
-// Provinces
-$provinces = Afghanistan::provinces();
-$kabul = Afghanistan::provinceByName('Kabul');
-// or: Afghanistan::provinceByName('کابل')
+$allVillages = Afghanistan::villages();       // Collection of 8,892 Village objects
+$total       = Afghanistan::countVillages();    // 8892
+```
 
-// Districts in Kabul
+### List villages by province
+
+```php
+$kabul = Afghanistan::provinceByName('Kabul');
+
+$villages = Afghanistan::villagesByProvince($kabul->id);
+// Every village in Kabul province
+```
+
+### List villages by district (recommended for dropdowns)
+
+```php
+$kabul = Afghanistan::provinceByName('Kabul');
 $districts = Afghanistan::districts($kabul->id);
 $kabulDistrict = $districts->firstWhere('name', 'Kabul');
 
-// Villages in Kabul district
 $villages = Afghanistan::villagesByDistrict($kabulDistrict->id);
-
-// Find a village
-$village = Afghanistan::villageByName('Ab Bala');
+// Every village in Kabul district — works for all 34 provinces
 ```
 
-### Verify installation (Tinker)
+### List villages by province + district name
+
+```php
+$villages = Afghanistan::villages('Kabul', 'Kabul');
+$villages = Afghanistan::villages('Herat', 'Herat');
+$villages = Afghanistan::villages('Badakhshan', 'Wakhan');
+```
+
+### Find a single village
+
+```php
+$village = Afghanistan::village(4183);
+$village = Afghanistan::villageByName('Ab Bala');
+
+echo $village->name;       // Ab Bala
+echo $village->province;   // Bamyan
+echo $village->district;   // ...
+echo $village->latitude;
+echo $village->longitude;
+```
+
+### Verify villages in Tinker
 
 ```bash
 php artisan tinker
 ```
 
 ```php
-Afghanistan::countProvinces();  // 34
 Afghanistan::countVillages();   // 8892
+Afghanistan::villages()->count(); // 8892
+
+// Villages exist in every province
+Afghanistan::villagesByProvince(Afghanistan::provinceByName('Herat')->id)->count();
+Afghanistan::villagesByProvince(Afghanistan::provinceByName('Ghazni')->id)->count();
 ```
 
-## Province → District → Village
+## Province → District → Village cascade
 
-Use **district ID** for the most reliable village lookup across all provinces:
+Full 3-level flow for forms and APIs:
 
 ```php
 use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
 
-// 1. Provinces
+// 1. List provinces
 $provinces = Afghanistan::provinces();
 
-// 2. Districts for selected province
+// 2. User picks a province → list its districts
 $herat = Afghanistan::provinceByName('Herat');
 $districts = Afghanistan::districts($herat->id);
 
-// 3. Villages for selected district
+// 3. User picks a district → list its villages
 $heratDistrict = $districts->firstWhere('name', 'Herat');
 $villages = Afghanistan::villagesByDistrict($heratDistrict->id);
+
+foreach ($villages as $village) {
+    echo $village->id;
+    echo $village->name;
+    echo $village->latitude;
+    echo $village->longitude;
+}
 ```
 
-### Blade dropdowns
+### Blade — 3 dropdowns (province, district, village)
 
 ```blade
-<select name="province">
+{{-- Province --}}
+<select name="province_id" id="province">
     @foreach (Afghanistan::provinces() as $province)
         <option value="{{ $province->id }}">{{ $province->nameFor('fa') }}</option>
     @endforeach
 </select>
+
+{{-- District (load via AJAX when province changes) --}}
+<select name="district_id" id="district"></select>
+
+{{-- Village (load via AJAX when district changes) --}}
+<select name="village_id" id="village"></select>
+```
+
+Load districts and villages from your controller:
+
+```php
+// GET /districts/{provinceId}
+return Afghanistan::districts($provinceId)->map->toArray();
+
+// GET /villages/{districtId}
+return Afghanistan::villagesByDistrict($districtId)->map->toArray();
 ```
 
 ### API routes example
@@ -170,20 +243,18 @@ Afghanistan::provinceByName('کابل');
 Afghanistan::districts();
 Afghanistan::districts($provinceId);
 
-// Villages
-Afghanistan::villages();
-Afghanistan::villagesByProvince($provinceId);
-Afghanistan::villagesByDistrict($districtId);
-Afghanistan::villages('Badakhshan', 'Wakhan');
-
-// Find village
-Afghanistan::village(4183);
-Afghanistan::villageByName('Ab Bala');
+// Villages — list, filter, find
+Afghanistan::villages();                              // all 8,892 villages
+Afghanistan::villagesByProvince($provinceId);         // villages in one province
+Afghanistan::villagesByDistrict($districtId);         // villages in one district
+Afghanistan::villages('Badakhshan', 'Wakhan');        // by province + district name
+Afghanistan::village(4183);                           // by ID
+Afghanistan::villageByName('Ab Bala');                // by name
 
 // Counts
-Afghanistan::countProvinces();
+Afghanistan::countProvinces();   // 34
 Afghanistan::countDistricts();
-Afghanistan::countVillages();
+Afghanistan::countVillages();    // 8892
 ```
 
 ### Dependency injection
@@ -200,11 +271,11 @@ class LocationController
         $this->afghanistan = $afghanistan;
     }
 
-    public function index()
+    public function villagesByDistrict(int $districtId)
     {
-        return response()->json(
-            $this->afghanistan->provinces()->map->toArray()
-        );
+        return $this->afghanistan
+            ->villagesByDistrict($districtId)
+            ->map->toArray();
     }
 }
 ```
@@ -224,6 +295,8 @@ return [
 ## Data Structure
 
 ### Village
+
+Each of the **8,892 villages** has:
 
 | Field                | Type   | Description                 |
 |----------------------|--------|-----------------------------|
@@ -257,7 +330,7 @@ composer test
 
 ## Data Disclaimer
 
-Geographic data is compiled from public sources. Some entries may be incomplete or inaccurate. Always verify critical location data independently.
+Geographic data is compiled from public sources. Some village entries may be incomplete or inaccurate. Always verify critical location data independently.
 
 ## Contributing
 
