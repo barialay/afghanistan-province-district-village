@@ -1,0 +1,71 @@
+{
+    "name": "barialay/afghanistan-province-district-village",
+    "version": "1.0.0",
+    "description": "Afghanistan province district village — a Laravel package for provinces, districts, and villages with GPS coordinates from OpenStreetMap GeoJSON.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "afghanistan",
+        "afghanistan-province-district-village",
+        "afghanistan province",
+        "afghanistan district",
+        "afghanistan village",
+        "province",
+        "district",
+        "village",
+        "laravel",
+        "laravel-package",
+        "geojson",
+        "openstreetmap",
+        "gps",
+        "coordinates",
+        "dari",
+        "pashto"
+    ],
+    "authors": [
+        {
+            "name": "Barialay",
+            "homepage": "https://github.com/Barialay"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/contracts": "^11.0|^12.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^10.0",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Barialay\\AfghanistanProvinceDistrictVillage\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Barialay\\AfghanistanProvinceDistrictVillage\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Barialay\\AfghanistanProvinceDistrictVillage\\AfghanistanServiceProvider"
+            ],
+            "aliases": {
+                "Afghanistan": "Barialay\\AfghanistanProvinceDistrictVillage\\Facades\\Afghanistan"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "phpunit",
+        "format": "pint"
+    }
+}
