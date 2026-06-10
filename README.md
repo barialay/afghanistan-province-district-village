@@ -342,4 +342,4 @@ Contributions are welcome via Pull Request on [GitHub](https://github.com/Barial
 
 This package is open-source software licensed under the [MIT License](LICENSE).
 
-Copyright (c) 2026 [Barialay](https://github.com/Barialay).
+Copyright (c) 2026 [Barialay Rahimi](https://github.com/Barialay).
