@@ -15,6 +15,9 @@ class Village implements Arrayable, Jsonable, JsonSerializable
     /** @var string */
     public $name;
 
+    /** @var string|null */
+    public $nameFa;
+
     /** @var string */
     public $province;
 
@@ -49,10 +52,12 @@ class Village implements Arrayable, Jsonable, JsonSerializable
         $latitude = null,
         $longitude = null,
         $areaSquareMeters = null,
-        $hectares = null
+        $hectares = null,
+        $nameFa = null
     ) {
         $this->id = $id;
         $this->name = $name;
+        $this->nameFa = $nameFa;
         $this->province = $province;
         $this->district = $district;
         $this->provinceId = $provinceId;
@@ -63,11 +68,21 @@ class Village implements Arrayable, Jsonable, JsonSerializable
         $this->hectares = $hectares;
     }
 
+    public function nameFor(string $locale = 'en'): string
+    {
+        if ($locale === 'fa' && $this->nameFa !== null && $this->nameFa !== '') {
+            return $this->nameFa;
+        }
+
+        return $this->name;
+    }
+
     public function toArray()
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'name_fa' => $this->nameFa,
             'province' => $this->province,
             'district' => $this->district,
             'province_id' => $this->provinceId,
@@ -91,7 +106,7 @@ class Village implements Arrayable, Jsonable, JsonSerializable
         $districtName = $district !== null ? $district->nameFor($locale) : $this->district;
 
         return array_merge($this->toArray(), [
-            'name' => $this->name,
+            'name' => $this->nameFor($locale),
             'province' => $provinceName,
             'district' => $districtName,
             'label' => LocationFormatter::villageLabel($province, $district, $this, $locale),

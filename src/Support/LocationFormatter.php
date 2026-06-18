@@ -34,7 +34,7 @@ class LocationFormatter
             $parts[] = self::districtLabel($district, $locale);
         }
 
-        $parts[] = LocationLabels::for('village', $locale).' '.$village->name;
+        $parts[] = LocationLabels::for('village', $locale).' '.$village->nameFor($locale);
 
         return implode(': ', $parts);
     }

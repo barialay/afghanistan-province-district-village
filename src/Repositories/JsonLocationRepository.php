@@ -232,7 +232,8 @@ class JsonLocationRepository implements LocationRepositoryInterface
                 $repository->toFloat($item['Latitude'] ?? $item['latitude'] ?? null),
                 $repository->toFloat($item['Longitude'] ?? $item['longitude'] ?? null),
                 $repository->toFloat($item['Area(Square Meter)'] ?? $item['area_square_meters'] ?? null),
-                $repository->toFloat($item['Hectares'] ?? $item['hectares'] ?? null)
+                $repository->toFloat($item['Hectares'] ?? $item['hectares'] ?? null),
+                isset($item['name_fa']) ? (string) $item['name_fa'] : null
             );
         })->values();
 

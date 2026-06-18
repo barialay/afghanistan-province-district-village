@@ -2,6 +2,19 @@
 
 All notable changes to `barialay/afghanistan-province-district-village` will be documented in this file.
 
+## [1.6.0] - 2026-06-18
+
+### Added
+
+- **888 villages** imported from OpenStreetMap (`export.geojson`, ODbL license)
+- Dari village names (`name_fa`) for **534** existing villages matched by GPS
+- `Village::nameFa` and `Village::nameFor()` for localized village names
+- `scripts/import-osm-villages.php` to re-run OSM enrichment
+
+### Note
+
+Google Earth data cannot be used (copyright / terms of service). OSM is the legal open-data source already in this repo.
+
 ## [1.5.0] - 2026-06-18
 
 ### Added
