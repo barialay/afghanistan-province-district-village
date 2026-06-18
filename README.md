@@ -331,7 +331,7 @@ Each item includes:
 |-------|---------|
 | `name` | `میدان وردک` |
 | `label` | `ولایت: میدان وردک` |
-| `display` (villages) | `ولایت: میدان وردک: ولسوالی: سیدآباد: کلی Abdul Muhayuddin` |
+| `display` (villages) | `ولایت: میدان وردک: ولسوالی: سیدآباد: کلی` |
 
 > Village **names** in the JSON dataset are mostly English/Latin script. Province and district names use Dari from admin data.
 
