@@ -2,6 +2,13 @@
 
 All notable changes to `barialay/afghanistan-province-district-village` will be documented in this file.
 
+## [1.4.2] - 2026-06-18
+
+### Fixed
+
+- Data file paths now resolve correctly when config is published (fixes "data file not found" after `vendor:publish`)
+- `resolveDataPath` now throws immediately when no readable data file is found (instead of returning an unreadable fallback path)
+
 ## [1.4.1] - 2026-06-18
 
 ### Changed

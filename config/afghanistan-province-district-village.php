@@ -8,7 +8,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'villages_file' => __DIR__.'/../resources/data/villages.json',
+    // Leave null to auto-detect: published resources, then package bundle.
+    'villages_file' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -16,7 +17,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'provinces_file' => __DIR__.'/../resources/data/provinces-and-districts.json',
+    'provinces_file' => null,
 
     /*
     |--------------------------------------------------------------------------

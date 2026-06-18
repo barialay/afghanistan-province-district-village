@@ -50,6 +50,12 @@ Built by [Barialay Rahimi](https://github.com/Barialay).
 composer require barialay/afghanistan-province-district-village:^1.4
 ```
 
+On **Windows PowerShell**, quote the package name (otherwise `^` is stripped):
+
+```powershell
+composer require "barialay/afghanistan-province-district-village:^1.4"
+```
+
 The package auto-registers. No manual setup needed. It depends only on `illuminate/support` and `illuminate/contracts` (already provided by Laravel), so it installs without forcing a full dependency upgrade.
 
 > Use **`^1.4`** or newer. Version **1.0.0** incorrectly required PHP 8.2+ — do not use it.

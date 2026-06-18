@@ -5,6 +5,7 @@ namespace Barialay\AfghanistanProvinceDistrictVillage;
 use Barialay\AfghanistanProvinceDistrictVillage\Contracts\LocationRepositoryInterface;
 use Barialay\AfghanistanProvinceDistrictVillage\Repositories\JsonLocationRepository;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class AfghanistanServiceProvider extends ServiceProvider
 {
@@ -17,8 +18,8 @@ class AfghanistanServiceProvider extends ServiceProvider
 
         $this->app->singleton(LocationRepositoryInterface::class, function () {
             return new JsonLocationRepository(
-                (string) config('afghanistan-province-district-village.villages_file'),
-                (string) config('afghanistan-province-district-village.provinces_file')
+                $this->resolveDataPath('villages_file', 'villages.json'),
+                $this->resolveDataPath('provinces_file', 'provinces-and-districts.json')
             );
         });
 
@@ -30,6 +31,44 @@ class AfghanistanServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(Afghanistan::class, 'afghanistan');
+    }
+
+    /**
+     * Resolve a data file path from config, published resources, or the package bundle.
+     */
+    private function resolveDataPath(string $configKey, string $filename): string
+    {
+        $configured = config("afghanistan-province-district-village.{$configKey}");
+
+        if (! empty($configured) && is_readable((string) $configured)) {
+            return (string) $configured;
+        }
+
+        $candidates = [];
+
+        if (function_exists('resource_path')) {
+            $candidates[] = resource_path("afghanistan-province-district-village/{$filename}");
+        }
+
+        $candidates[] = __DIR__."/../resources/data/{$filename}";
+
+        foreach ($candidates as $path) {
+            if (is_readable($path)) {
+                return $path;
+            }
+        }
+
+        $attempted = $candidates;
+
+        if (! empty($configured)) {
+            array_unshift($attempted, (string) $configured);
+        }
+
+        throw new RuntimeException(
+            "Afghanistan data file not found or not readable: {$filename}. "
+            .'Tried: '.implode(', ', $attempted).'. '
+            .'Publish data with: php artisan vendor:publish --tag=afghanistan-province-district-village-data'
+        );
     }
 
     public function boot()
