@@ -26,6 +26,7 @@ Built by [Barialay Rahimi](https://github.com/Barialay).
 - Villages include **latitude**, **longitude**, and area data when available
 - Find a village by **ID** or **name**
 - Multilingual province and district names (English, Dari, Pashto)
+- **Dari administrative labels** — ولایت, ولسوالی, کلی (e.g. `ولایت: میدان وردک: ولسوالی: سیدآباد: کلی …`)
 - Laravel auto-discovery (Service Provider + `Afghanistan` Facade)
 - Publishable config and JSON data files
 - Typed objects: `Province`, `District`, `Village`
@@ -299,6 +300,40 @@ class LocationController
     }
 }
 ```
+
+    'default_locale' => 'fa', // en, fa (Dari), pa (Pashto)
+];
+```
+
+## Dari / Pashto display labels
+
+Default locale is **Dari (`fa`)**. Use localized helpers for dropdowns and APIs:
+
+```php
+use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
+
+// Province options: ولایت: میدان وردک
+Afghanistan::provincesLocalized();
+
+// District options: ولسوالی: سیدآباد
+Afghanistan::districtsLocalized($provinceId);
+
+// Village options: ولایت: میدان وردک: ولسوالی: سیدآباد: کلی VillageName
+Afghanistan::villagesByDistrictLocalized($districtId);
+
+// English instead
+Afghanistan::provincesLocalized('en');
+```
+
+Each item includes:
+
+| Field | Example |
+|-------|---------|
+| `name` | `میدان وردک` |
+| `label` | `ولایت: میدان وردک` |
+| `display` (villages) | `ولایت: میدان وردک: ولسوالی: سیدآباد: کلی Abdul Muhayuddin` |
+
+> Village **names** in the JSON dataset are mostly English/Latin script. Province and district names use Dari from admin data.
 
 ## Configuration
 

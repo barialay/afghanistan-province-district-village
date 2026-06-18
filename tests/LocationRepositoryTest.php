@@ -110,4 +110,28 @@ class LocationRepositoryTest extends TestCase
         $this->assertSame(8892, AfghanistanFacade::countVillages());
         $this->assertGreaterThanOrEqual(34, AfghanistanFacade::countProvinces());
     }
+
+    public function test_it_formats_dari_labels_for_province_district_and_village()
+    {
+        $afghanistan = $this->app->make(Afghanistan::class);
+        $province = $afghanistan->provinceByName('Wardak');
+        $district = $afghanistan->districts($province->id)->firstWhere('name', 'Saydabad');
+
+        $this->assertNotNull($province);
+        $this->assertNotNull($district);
+
+        $provinceLabel = $province->toLocalizedArray('fa');
+        $this->assertSame('ولایت: میدان وردک', $provinceLabel['label']);
+        $this->assertSame('میدان وردک', $provinceLabel['name']);
+
+        $districtLabel = $district->toLocalizedArray('fa');
+        $this->assertSame('ولسوالی: سیدآباد', $districtLabel['label']);
+        $this->assertSame('سیدآباد', $districtLabel['name']);
+
+        $villages = $afghanistan->villagesByDistrictLocalized($district->id, 'fa');
+        $this->assertGreaterThan(0, $villages->count());
+
+        $first = $villages->first();
+        $this->assertStringStartsWith('ولایت: میدان وردک: ولسوالی: سیدآباد: کلی ', $first['display']);
+    }
 }

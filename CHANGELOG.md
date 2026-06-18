@@ -2,6 +2,19 @@
 
 All notable changes to `barialay/afghanistan-province-district-village` will be documented in this file.
 
+## [1.5.0] - 2026-06-18
+
+### Added
+
+- Dari/Pashto administrative labels: ولایت, ولسوالی, کلی
+- `toLocalizedArray()` on Province, District, and Village
+- `provincesLocalized()`, `districtsLocalized()`, `villagesByDistrictLocalized()` on `Afghanistan` service
+- Default locale changed to `fa` (Dari)
+
+### Changed
+
+- Wardak province and Saydabad district Dari spellings updated (میدان وردک, سیدآباد)
+
 ## [1.4.2] - 2026-06-18
 
 ### Fixed

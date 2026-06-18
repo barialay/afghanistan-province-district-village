@@ -3126,8 +3126,8 @@
     {
         "id": 27,
         "name": "Wardak",
-        "nameFa": "میدان وردگ",
-        "namePa": "میدان وردگ",
+        "nameFa": "میدان وردک",
+        "namePa": "میدان وردک",
         "latitude": "34.239298",
         "longitude": "67.541983",
         "districts": [
@@ -3198,8 +3198,8 @@
             {
                 "id": 177,
                 "name": "Saydabad",
-                "nameFa": "سید آباد",
-                "namePa": "سید آباد",
+                "nameFa": "سیدآباد",
+                "namePa": "سیدآباد",
                 "latitude": "33.934723",
                 "longitude": "68.676363"
             }

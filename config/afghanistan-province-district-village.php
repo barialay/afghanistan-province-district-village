@@ -28,6 +28,6 @@ return [
     |
     */
 
-    'default_locale' => 'en',
+    'default_locale' => 'fa',
 
 ];

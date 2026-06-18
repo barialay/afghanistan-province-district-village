@@ -121,4 +121,51 @@ class Afghanistan
     {
         return $this->villages($province, $district)->count();
     }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function provincesLocalized(?string $locale = null): Collection
+    {
+        $locale = $this->resolveLocale($locale);
+
+        return $this->provinces()->map(function (Province $province) use ($locale) {
+            return $province->toLocalizedArray($locale);
+        });
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function districtsLocalized(?int $provinceId = null, ?string $locale = null): Collection
+    {
+        $locale = $this->resolveLocale($locale);
+
+        return $this->districts($provinceId)->map(function (District $district) use ($locale) {
+            return $district->toLocalizedArray($locale);
+        });
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function villagesByDistrictLocalized(int $districtId, ?string $locale = null): Collection
+    {
+        $locale = $this->resolveLocale($locale);
+        $district = $this->district($districtId);
+        $province = $district !== null ? $this->province($district->provinceId) : null;
+
+        return $this->villagesByDistrict($districtId)->map(function (Village $village) use ($locale, $province, $district) {
+            return $village->toLocalizedArray($locale, $province, $district);
+        });
+    }
+
+    private function resolveLocale(?string $locale): string
+    {
+        if ($locale !== null && in_array($locale, ['en', 'fa', 'pa'], true)) {
+            return $locale;
+        }
+
+        return $this->defaultLocale;
+    }
 }

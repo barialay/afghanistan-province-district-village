@@ -2,6 +2,7 @@
 
 namespace Barialay\AfghanistanProvinceDistrictVillage\Data;
 
+use Barialay\AfghanistanProvinceDistrictVillage\Support\LocationFormatter;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use JsonSerializable;
@@ -76,6 +77,26 @@ class Village implements Arrayable, Jsonable, JsonSerializable
             'area_square_meters' => $this->areaSquareMeters,
             'hectares' => $this->hectares,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toLocalizedArray(
+        string $locale = 'fa',
+        ?Province $province = null,
+        ?District $district = null
+    ): array {
+        $provinceName = $province !== null ? $province->nameFor($locale) : $this->province;
+        $districtName = $district !== null ? $district->nameFor($locale) : $this->district;
+
+        return array_merge($this->toArray(), [
+            'name' => $this->name,
+            'province' => $provinceName,
+            'district' => $districtName,
+            'label' => LocationFormatter::villageLabel($province, $district, $this, $locale),
+            'display' => LocationFormatter::villageLabel($province, $district, $this, $locale),
+        ]);
     }
 
     public function toJson($options = 0)
