@@ -71,7 +71,9 @@ class Village implements Arrayable, Jsonable, JsonSerializable
     public function nameFor(string $locale = 'en'): string
     {
         if ($locale === 'fa' && $this->nameFa !== null && $this->nameFa !== '') {
-            return $this->nameFa;
+            if (\Barialay\AfghanistanProvinceDistrictVillage\Support\OsmNameNormalizer::hasArabicScript($this->nameFa)) {
+                return $this->nameFa;
+            }
         }
 
         return $this->name;

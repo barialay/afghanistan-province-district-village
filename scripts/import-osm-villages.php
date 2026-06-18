@@ -1,26 +1,27 @@
 <?php
 
 /**
- * Import village names from OpenStreetMap (export.geojson).
+ * Import / enrich village Dari names from OpenStreetMap export.geojson.
  *
- * - Adds Dari names (name_fa) to existing villages by GPS proximity
- * - Adds OSM villages not already in the dataset (nearest district assignment)
- *
- * Source: public/export.geojson (ODbL — OpenStreetMap, not Google Earth)
- *
- * Usage: php scripts/import-osm-villages.php [--dry-run]
+ * Usage:
+ *   php scripts/import-osm-villages.php           # enrich + add missing
+ *   php scripts/import-osm-villages.php --dry-run
+ *   php scripts/import-osm-villages.php --enrich-only
  */
 
 $root = dirname(__DIR__);
 require $root.'/vendor/autoload.php';
 
+use Barialay\AfghanistanProvinceDistrictVillage\Support\OsmNameNormalizer;
 use Barialay\AfghanistanProvinceDistrictVillage\Support\ProvinceNameMapper;
 
 $geojsonPath = $root.'/public/export.geojson';
 $villagesPath = $root.'/resources/data/villages.json';
 $provincesPath = $root.'/resources/data/provinces-and-districts.json';
 $dryRun = in_array('--dry-run', $argv, true);
-$matchKm = 1.5;
+$enrichOnly = in_array('--enrich-only', $argv, true);
+$matchKm = 3.0;
+$nameMatchKm = 8.0;
 $maxDistrictKm = 40.0;
 
 $geojson = json_decode(file_get_contents($geojsonPath), true);
@@ -29,84 +30,128 @@ $provinces = json_decode(file_get_contents($provincesPath), true);
 
 $districts = buildDistrictIndex($provinces);
 $osmPoints = buildOsmPoints($geojson);
+$osmByEnglishName = indexOsmByEnglishName($osmPoints);
+
 $nextId = max(array_map(function ($v) {
     return (int) ($v['No'] ?? $v['id'] ?? 0);
 }, $villages)) + 1;
 
-$enriched = 0;
+$enrichedGps = 0;
+$enrichedName = 0;
+$enrichedReplaced = 0;
 $added = 0;
 
 foreach ($villages as &$village) {
+    $englishName = (string) ($village['Village Name'] ?? $village['name'] ?? '');
     $lat = (float) ($village['Latitude'] ?? $village['latitude'] ?? 0);
     $lon = (float) ($village['Longitude'] ?? $village['longitude'] ?? 0);
+    $currentFa = isset($village['name_fa']) ? (string) $village['name_fa'] : '';
 
-    if ($lat === 0.0 && $lon === 0.0) {
+    $candidate = null;
+
+    if ($lat !== 0.0 || $lon !== 0.0) {
+        $candidate = findBestOsmMatch($lat, $lon, $englishName, $osmPoints, $matchKm);
+        if ($candidate !== null) {
+            $enrichedGps++;
+        }
+    }
+
+    if ($candidate === null) {
+        $candidate = findOsmByEnglishName($englishName, $osmByEnglishName);
+        if ($candidate !== null) {
+            $enrichedName++;
+        }
+    }
+
+    if ($candidate === null && ($lat !== 0.0 || $lon !== 0.0)) {
+        $candidate = findBestOsmMatch($lat, $lon, $englishName, $osmPoints, $nameMatchKm);
+    }
+
+    if ($candidate === null || $candidate['name_fa'] === null) {
         continue;
     }
 
-    $nearest = findNearestOsm($lat, $lon, $osmPoints, $matchKm);
+    $shouldApply = $currentFa === ''
+        || OsmNameNormalizer::isLatinLike($currentFa)
+        || OsmNameNormalizer::namesMatch($currentFa, $englishName);
 
-    if ($nearest === null) {
+    if (! $shouldApply) {
         continue;
     }
 
-    if (empty($village['name_fa']) && $nearest['name_fa'] !== null) {
-        $village['name_fa'] = $nearest['name_fa'];
-        $enriched++;
+    if ($currentFa !== '' && $currentFa !== $candidate['name_fa']) {
+        $enrichedReplaced++;
     }
+
+    $village['name_fa'] = $candidate['name_fa'];
 }
 unset($village);
 
-$existingCoords = array_map(function ($v) {
-    return [
-        'lat' => (float) ($v['Latitude'] ?? 0),
-        'lon' => (float) ($v['Longitude'] ?? 0),
-    ];
-}, $villages);
-
-foreach ($osmPoints as $point) {
-    if ($point['name_fa'] === null && $point['name_en'] === null) {
-        continue;
-    }
-
-    $minKm = PHP_FLOAT_MAX;
-
-    foreach ($existingCoords as $coord) {
-        if ($coord['lat'] === 0.0 && $coord['lon'] === 0.0) {
+if (! $enrichOnly) {
+    foreach ($osmPoints as $point) {
+        if ($point['name_fa'] === null) {
             continue;
         }
 
-        $distance = haversineKm($point['lat'], $point['lon'], $coord['lat'], $coord['lon']);
+        $englishName = $point['name_en'] ?? $point['name_raw'] ?? $point['name_fa'];
+        $minKm = PHP_FLOAT_MAX;
+        $nearestName = null;
 
-        if ($distance < $minKm) {
-            $minKm = $distance;
+        foreach ($villages as $existing) {
+            $lat = (float) ($existing['Latitude'] ?? 0);
+            $lon = (float) ($existing['Longitude'] ?? 0);
+
+            if ($lat === 0.0 && $lon === 0.0) {
+                continue;
+            }
+
+            $distance = haversineKm($point['lat'], $point['lon'], $lat, $lon);
+
+            if ($distance < $minKm) {
+                $minKm = $distance;
+                $nearestName = (string) ($existing['Village Name'] ?? '');
+            }
         }
+
+        $nameAlreadyExists = false;
+
+        foreach ($villages as $existing) {
+            $existingName = (string) ($existing['Village Name'] ?? '');
+
+            if (OsmNameNormalizer::namesMatch($existingName, (string) $englishName)) {
+                $nameAlreadyExists = true;
+                break;
+            }
+        }
+
+        if ($nameAlreadyExists) {
+            continue;
+        }
+
+        if ($minKm <= $matchKm && $nearestName !== null
+            && OsmNameNormalizer::namesSimilar($nearestName, (string) $englishName)) {
+            continue;
+        }
+
+        $district = findNearestDistrict($point['lat'], $point['lon'], $districts, $maxDistrictKm);
+
+        if ($district === null) {
+            continue;
+        }
+
+        $villages[] = [
+            'No' => $nextId++,
+            'Province' => $district['province_name'],
+            'District' => $district['district_name'],
+            'Village Name' => $englishName,
+            'name_fa' => $point['name_fa'],
+            'Latitude' => round($point['lat'], 5),
+            'Longitude' => round($point['lon'], 5),
+            'source' => 'openstreetmap',
+        ];
+
+        $added++;
     }
-
-    if ($minKm <= $matchKm) {
-        continue;
-    }
-
-    $district = findNearestDistrict($point['lat'], $point['lon'], $districts, $maxDistrictKm);
-
-    if ($district === null) {
-        continue;
-    }
-
-    $englishName = $point['name_en'] ?? $point['name_fa'];
-    $villages[] = [
-        'No' => $nextId++,
-        'Province' => $district['province_name'],
-        'District' => $district['district_name'],
-        'Village Name' => $englishName,
-        'name_fa' => $point['name_fa'] ?? $englishName,
-        'Latitude' => round($point['lat'], 5),
-        'Longitude' => round($point['lon'], 5),
-        'source' => 'openstreetmap',
-    ];
-
-    $existingCoords[] = ['lat' => $point['lat'], 'lon' => $point['lon']];
-    $added++;
 }
 
 if (! $dryRun) {
@@ -116,13 +161,23 @@ if (! $dryRun) {
     );
 }
 
+$withDari = 0;
+foreach ($villages as $village) {
+    if (! empty($village['name_fa']) && OsmNameNormalizer::hasArabicScript((string) $village['name_fa'])) {
+        $withDari++;
+    }
+}
+
 echo json_encode([
     'dry_run' => $dryRun,
+    'enrich_only' => $enrichOnly,
     'osm_points' => count($osmPoints),
-    'villages_before' => count($villages) - $added,
-    'villages_after' => count($villages),
-    'name_fa_enriched' => $enriched,
+    'villages_total' => count($villages),
+    'enriched_by_gps' => $enrichedGps,
+    'enriched_by_name' => $enrichedName,
+    'latin_name_fa_replaced' => $enrichedReplaced,
     'osm_villages_added' => $added,
+    'villages_with_dari_name' => $withDari,
 ], JSON_PRETTY_PRINT).PHP_EOL;
 
 function buildDistrictIndex(array $provinces): array
@@ -169,13 +224,7 @@ function buildOsmPoints(array $geojson): array
         }
 
         $nameFa = pickDariName($props);
-        $nameEn = null;
-
-        if (! empty($props['name:en'])) {
-            $nameEn = trim((string) $props['name:en']);
-        } elseif (! empty($props['name']) && isLatin((string) $props['name'])) {
-            $nameEn = trim((string) $props['name']);
-        }
+        $nameEn = pickEnglishName($props);
 
         if ($nameFa === null && $nameEn === null) {
             continue;
@@ -186,22 +235,76 @@ function buildOsmPoints(array $geojson): array
             'lon' => $coords[0],
             'name_fa' => $nameFa,
             'name_en' => $nameEn,
+            'name_raw' => isset($props['name']) ? (string) $props['name'] : null,
         ];
     }
 
     return $points;
 }
 
-function findNearestOsm(float $lat, float $lon, array $osmPoints, float $maxKm): ?array
+function indexOsmByEnglishName(array $osmPoints): array
 {
-    $best = null;
-    $bestDistance = $maxKm;
+    $index = [];
 
     foreach ($osmPoints as $point) {
+        foreach ([$point['name_en'], $point['name_raw']] as $label) {
+            if ($label === null || $label === '') {
+                continue;
+            }
+
+            $key = OsmNameNormalizer::normalize($label);
+            $index[$key][] = $point;
+        }
+    }
+
+    return $index;
+}
+
+function findOsmByEnglishName(string $englishName, array $index): ?array
+{
+    $key = OsmNameNormalizer::normalize($englishName);
+
+    if ($key === '' || ! isset($index[$key])) {
+        return null;
+    }
+
+    foreach ($index[$key] as $point) {
+        if ($point['name_fa'] !== null) {
+            return $point;
+        }
+    }
+
+    return $index[$key][0];
+}
+
+function findBestOsmMatch(float $lat, float $lon, string $englishName, array $osmPoints, float $maxKm): ?array
+{
+    $best = null;
+    $bestScore = -1.0;
+
+    foreach ($osmPoints as $point) {
+        if ($point['name_fa'] === null) {
+            continue;
+        }
+
         $distance = haversineKm($lat, $lon, $point['lat'], $point['lon']);
 
-        if ($distance < $bestDistance) {
-            $bestDistance = $distance;
+        if ($distance > $maxKm) {
+            continue;
+        }
+
+        $score = 100.0 - min($distance * 20.0, 80.0);
+
+        if ($point['name_en'] !== null && OsmNameNormalizer::namesMatch($englishName, $point['name_en'])) {
+            $score += 50.0;
+        } elseif ($point['name_raw'] !== null && OsmNameNormalizer::namesMatch($englishName, $point['name_raw'])) {
+            $score += 50.0;
+        } elseif ($point['name_en'] !== null && OsmNameNormalizer::namesSimilar($englishName, $point['name_en'])) {
+            $score += 30.0;
+        }
+
+        if ($score > $bestScore) {
+            $bestScore = $score;
             $best = $point;
         }
     }
@@ -243,24 +346,30 @@ function extractCoordinates(array $geometry): ?array
 
 function pickDariName(array $props): ?string
 {
-    if (! empty($props['name:fa'])) {
-        return trim((string) $props['name:fa']);
+    foreach (['name:fa', 'name:prs', 'name:ps'] as $key) {
+        if (! empty($props[$key]) && OsmNameNormalizer::hasArabicScript((string) $props[$key])) {
+            return trim((string) $props[$key]);
+        }
     }
 
-    if (! empty($props['name']) && ! isLatin((string) $props['name'])) {
+    if (! empty($props['name']) && OsmNameNormalizer::hasArabicScript((string) $props['name'])) {
         return trim((string) $props['name']);
-    }
-
-    if (! empty($props['name:ps'])) {
-        return trim((string) $props['name:ps']);
     }
 
     return null;
 }
 
-function isLatin(string $value): bool
+function pickEnglishName(array $props): ?string
 {
-    return (bool) preg_match('/^[a-zA-Z0-9\s\-\.\(\)]+$/u', $value);
+    if (! empty($props['name:en'])) {
+        return trim((string) $props['name:en']);
+    }
+
+    if (! empty($props['name']) && OsmNameNormalizer::isLatinLike((string) $props['name'])) {
+        return trim((string) $props['name']);
+    }
+
+    return null;
 }
 
 function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float
