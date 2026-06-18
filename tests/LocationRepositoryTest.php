@@ -31,7 +31,7 @@ class LocationRepositoryTest extends TestCase
     {
         $afghanistan = $this->app->make(Afghanistan::class);
 
-        $this->assertSame(9780, $afghanistan->countVillages());
+        $this->assertSame(10363, $afghanistan->countVillages());
 
         $linked = $afghanistan->villages()->filter(function ($village) {
             return $village->provinceId !== null && $village->districtId !== null;
@@ -107,7 +107,7 @@ class LocationRepositoryTest extends TestCase
 
     public function test_facade_resolves_correctly()
     {
-        $this->assertSame(9780, AfghanistanFacade::countVillages());
+        $this->assertSame(10363, AfghanistanFacade::countVillages());
         $this->assertGreaterThanOrEqual(34, AfghanistanFacade::countProvinces());
     }
 

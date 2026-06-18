@@ -8,7 +8,8 @@ All notable changes to `barialay/afghanistan-province-district-village` will be 
 
 - OSM enrichment now matches villages by **English name** (e.g. `Zarghūn Shahr` → `زرغون شهر`) as well as GPS
 - Replaces Latin `name_fa` fallbacks with real Dari script from `name:fa`
-- **2,938** villages now have Arabic/Dari names (was ~534)
+- Adds OSM villages with distinct names even when near existing coordinates
+- **3,521** villages now have Arabic/Dari names; **10,363** villages total
 
 ## [1.6.0] - 2026-06-18
 

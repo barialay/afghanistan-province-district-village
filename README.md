@@ -17,11 +17,11 @@ Built by [Barialay Rahimi](https://github.com/Barialay).
 |-------------|---------|------------------------------------------------------|
 | Provinces   | 34      | English, Dari, and Pashto names + GPS coordinates    |
 | Districts   | 400+    | Linked to provinces, multilingual names              |
-| **Villages**| **9,780** | **Name, GPS, province ID, district ID** — all provinces |
+| **Villages**| **10,363** | **Name, GPS, province ID, district ID** — all provinces |
 
 ## Features
 
-- **List all 9,780 villages** or filter by province / district
+- **List all 10,363 villages** or filter by province / district
 - **Province → district → village** cascade — ideal for 3-level dropdowns
 - Villages include **latitude**, **longitude**, and area data when available
 - Find a village by **ID** or **name**
@@ -102,7 +102,7 @@ The package **lists villages**. Use any of the methods below depending on your U
 use Barialay\AfghanistanProvinceDistrictVillage\Facades\Afghanistan;
 
 $allVillages = Afghanistan::villages();       // Collection of 8,892 Village objects
-$total       = Afghanistan::countVillages();    // 9780
+$total       = Afghanistan::countVillages();    // 10363
 ```
 
 ### List villages by province
@@ -153,8 +153,8 @@ php artisan tinker
 ```
 
 ```php
-Afghanistan::countVillages();   // 9780
-Afghanistan::villages()->count(); // 9780
+Afghanistan::countVillages();   // 10363
+Afghanistan::villages()->count(); // 10363
 
 // Villages exist in every province
 Afghanistan::villagesByProvince(Afghanistan::provinceByName('Herat')->id)->count();
@@ -275,7 +275,7 @@ Afghanistan::villageByName('Ab Bala');                // by name
 // Counts
 Afghanistan::countProvinces();   // 34
 Afghanistan::countDistricts();
-Afghanistan::countVillages();    // 9780
+Afghanistan::countVillages();    // 10363
 ```
 
 ### Dependency injection
