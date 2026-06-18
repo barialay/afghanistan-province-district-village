@@ -2,6 +2,14 @@
 
 All notable changes to `barialay/afghanistan-province-district-village` will be documented in this file.
 
+## [1.4.1] - 2026-06-18
+
+### Changed
+
+- PHP constraint widened to `>=7.3` (all PHP 8.x including 8.2, 8.3, 8.4)
+- Laravel 7.30+ support added alongside Laravel 8–12
+- README clarifies PHP/Laravel matrix and common Composer install errors
+
 ## [1.4.0] - 2026-06-09
 
 ### Changed

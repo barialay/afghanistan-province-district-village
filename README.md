@@ -9,7 +9,7 @@ A Laravel package for Afghanistan **provinces**, **districts**, and **villages**
 
 This package includes a full **village database** — **8,892 villages** across all **34 provinces**, each with a name, GPS coordinates, and links to its province and district. No database migrations or seeding required; villages ship as JSON and load at runtime.
 
-Built by [Barialay](https://github.com/Barialay).
+Built by [Barialay Rahimi](https://github.com/Barialay).
 
 ## What's included
 
@@ -34,13 +34,15 @@ Built by [Barialay](https://github.com/Barialay).
 
 | PHP | Laravel |
 |-----|---------|
-| 7.3 – 7.4 | 8.x |
-| 8.0+ | 8.x, 9.x, 10.x, 11.x, 12.x |
+| 7.3 – 7.4 | 7.x, 8.x |
+| 8.0 – 8.4+ | 8.x, 9.x, 10.x, 11.x, 12.x |
 
-- **PHP:** `^7.3` or `^8.0`
-- **Laravel:** `^8.0` through `^12.0`
+- **PHP:** `>=7.3` (includes 8.0, 8.1, 8.2, 8.3, 8.4, and future 8.x)
+- **Laravel:** `^7.30` through `^12.0`
 
-> PHP 7.3/7.4 only works with **Laravel 8**. Laravel 9 and above require PHP 8.0+.
+> There is no PHP 7.8 or 7.9 — PHP 7 ended at **7.4**. This package supports **7.3+** and all **8.x** releases.
+>
+> PHP 7.3/7.4 only works with **Laravel 7–8**. Laravel 9 and above require PHP 8.0+.
 
 ## Installation
 
@@ -48,11 +50,23 @@ Built by [Barialay](https://github.com/Barialay).
 composer require barialay/afghanistan-province-district-village:^1.4
 ```
 
-The package auto-registers. No manual setup needed.
+The package auto-registers. No manual setup needed. It depends only on `illuminate/support` and `illuminate/contracts` (already provided by Laravel), so it installs without forcing a full dependency upgrade.
 
-### If Composer blocks installation (security advisories)
+> Use **`^1.4`** or newer. Version **1.0.0** incorrectly required PHP 8.2+ — do not use it.
 
-If you see errors about `security advisories` on `laravel/framework`, update your Laravel app first — this is not a package issue:
+### If Composer blocks installation
+
+**PHP version mismatch in your Laravel app (not this package):**
+
+```text
+Root composer.json requires php ^8.3 but your php version (8.2.x) does not satisfy that requirement.
+```
+
+Your **project** `composer.json` has `"php": "^8.3"`. Lower it to match your installed PHP, for example `"php": "^8.2"`, or upgrade PHP to 8.3+.
+
+**Security advisories on `laravel/framework`:**
+
+Update your Laravel app first — this is not a package issue:
 
 ```bash
 composer update
